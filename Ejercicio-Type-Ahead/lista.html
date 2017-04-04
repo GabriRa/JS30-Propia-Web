@@ -1,0 +1,128 @@
+
+
+<!--Faltaria arreglar el pequeño espacio que queda entre cada par de elementos en la lista, se puede hacer un arreglo rapido con 
+    scaleY, pero las letras quedan muy raras-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div class="principal">
+        <div class="buscador">
+            <input type="text" placeholder="City or State">
+        </div>
+
+        <div class="resultados">
+            <ul id="lista">
+                <li>Busca una ciudad</li>
+                <li>o estado de EEUU</li>
+            </ul>
+        </div>
+    </div>
+    <style>
+    body{
+        background-color: yellow;
+    }
+    /*Elimina los puntos de la lista desordenada*/
+    ul{
+        list-style-type: none;
+        padding:0;
+    }
+    /*A cada elemento par/impar de la lista lo transformar para dar una perspectiva parecida a un acordeon*/
+    li:nth-child(odd){
+        transform: perspective(100px) rotateX(-3deg) translateY(3px) /*scaleY(1.2)*/;
+        background: linear-gradient(to top, #fff 0%, #efefef 100%);
+    }
+    li:nth-child(even){
+        transform: perspective(100px) rotateX(3deg) translateY(-3px);
+        background: linear-gradient(to bottom, #fff 0%, #efefef 100%);
+    }
+    /*Con un width del 100%, y text-align conseguimos centrar horizontalente. El text-align debe llevarlo cada hijo (?)*/
+    .principal{
+        width:100%;
+        text-align: center;
+        display:flex;
+        flex-direction: column;
+    }
+    li{
+        font-size:22px;
+        width:300px;
+        padding:20px;
+        background-color: aliceblue;
+        border:1px solid #a8adb2;
+    }
+    input{
+        text-align:center;
+        width: 400px;
+        height: 80px;
+        font-size: 40px;
+        border: 7px solid #c0c6cc;
+        border-radius: 5px;
+    }
+    .buscador{
+        text-align:center;
+        margin-top:40px;
+    }
+    .resultados{
+        margin:auto;
+    }
+    textarea:focus, input:focus{
+        outline: none;
+    }
+    #subrayar{
+        background-color:yellow;
+    }
+    </style>
+    <script>
+        const input = document.querySelector("input");
+        const lista = document.querySelector("#lista");
+        const ciudades = "https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json"
+        const lista_ciudades =[];
+        let lista_ciudades_coinciden = [];
+
+        // Hacemos una llamada con fetch, el cual genera una promesa (?), una vez se cumpla esta promesa, pasamos la informacion
+        // a formato json, y luego usamos spread (...) sobre un iterable para meter cada elemento en la array
+        fetch(ciudades)
+            .then(blob => blob.json())
+            .then(data => lista_ciudades.push(...data));
+        
+        //En caso de no haber nada escrito, o solo un espacio, añadimos un texto predeterminado
+        if (input.value == "" || input.value == " "){
+            lista.innerHTML = "<li>Busca una ciudad</li> <li>o estado de EEUU</li>";
+        }
+
+        //Crea una RegExp con la busqueda realizada, itera sobre la lista de ciudades comprobando si coincide el nombre con la busqueda 
+        //y lo pasa a una array con el nombre(modificado para ser resaltado la parte de la busqueda) y la poblacion 
+        function buscador(busqueda){
+            lista_ciudades_coinciden = [];
+            const expresion = new RegExp(busqueda, "i");
+            lista_ciudades.forEach(ciudad => {
+                if (ciudad.city.match(expresion)){
+                    let subrayado = ciudad.city.match(expresion);
+                    subrayado = ciudad.city.replace(expresion, `<label id="subrayar">${subrayado}</label>`);
+                    lista_ciudades_coinciden.push([subrayado, ciudad.population])
+                }
+            })
+        }
+
+        //Reducimos una array a un solo string que lleve el formato requerido para usarse en la lista 
+        function seleccionador() {
+            lista_ciudades_coinciden = [];
+            var resultados;
+            var busqueda = input.value;
+            buscador(busqueda);
+            resultados = lista_ciudades_coinciden.reduce((resultado, array) => {
+                return resultado +"<li>"+ array[0] + "<label> " + array[1] + "</label>" + "</li>"
+            }, "")
+            lista.innerHTML = resultados;
+        };
+
+        input.addEventListener("input", seleccionador);
+    </script>
+</body>
+</html>
